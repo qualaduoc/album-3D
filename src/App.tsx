@@ -984,6 +984,13 @@ export default function GrandTreeApp() {
     return saved ? parseFloat(saved) : 0.5; // Tốc độ xoay mặc định là 0.5
   });
 
+  // --- Quản lý trạng thái Tải trang & Chế độ xem (Loading & Viewer Mode) ---
+  const [isViewerMode] = useState<boolean>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has('album'); // Tự động bật chế độ Viewer khi mở bằng link chia sẻ
+  });
+  const [isPageLoading, setIsPageLoading] = useState<boolean>(true); // Mặc định hiển thị màn hình Loading nghệ thuật
+
   // Quản lý Giao diện 3D đang chọn (Lưu vào localStorage)
   const [activeTheme, setActiveTheme] = useState<'CHRISTMAS_TREE' | 'COSMIC_ORBIT' | 'VIETNAM_FLAG'>(() => {
     const saved = localStorage.getItem('christmas_tree_active_theme');
@@ -1091,6 +1098,16 @@ export default function GrandTreeApp() {
       if (savedSpeed) setAutoRotateSpeed(parseFloat(savedSpeed));
     }
   }, []);
+
+  // --- Tự động ẩn màn hình Loading khi AI camera sẵn sàng hoặc gặp lỗi ---
+  useEffect(() => {
+    if (aiStatus.startsWith("AI READY") || aiStatus.startsWith("ERROR")) {
+      const timer = setTimeout(() => {
+        setIsPageLoading(false);
+      }, 1200); // 1.2 giây để Khầy trải nghiệm màn hình chờ lướt đi thật mượt mà
+      return () => clearTimeout(timer);
+    }
+  }, [aiStatus]);
 
   // --- Chống nhiễu và sườn xung kích hoạt cử chỉ ---
   const lastGestureRef = useRef<string>("");
@@ -1249,21 +1266,22 @@ export default function GrandTreeApp() {
       <GestureController onGesture={handleGesture} onMove={setRotationSpeed} onStatus={setAiStatus} debugMode={debugMode} />
 
       {/* UI - Giao diện Glassmorphism dán Link Google Drive */}
-      <div style={{
-        position: 'absolute',
-        top: '80px',
-        left: '40px',
-        zIndex: 10,
-        width: '320px',
-        padding: '20px',
-        borderRadius: '12px',
-        backgroundColor: 'rgba(0, 5, 0, 0.65)',
-        border: '1px solid rgba(255, 215, 0, 0.25)',
-        backdropFilter: 'blur(16px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        fontFamily: 'sans-serif',
-        userSelect: 'none'
-      }}>
+      {!isViewerMode && (
+        <div style={{
+          position: 'absolute',
+          top: '80px',
+          left: '40px',
+          zIndex: 10,
+          width: '320px',
+          padding: '20px',
+          borderRadius: '12px',
+          backgroundColor: 'rgba(0, 5, 0, 0.65)',
+          border: '1px solid rgba(255, 215, 0, 0.25)',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+          fontFamily: 'sans-serif',
+          userSelect: 'none'
+        }}>
         <h3 style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
           🖼️ Thêm Ảnh Album 3D
         </h3>
@@ -1330,23 +1348,25 @@ export default function GrandTreeApp() {
           🔗 Chia Sẻ Album 3D
         </button>
       </div>
+      )}
 
       {/* UI - Giao diện Glassmorphism Trình phát nhạc nền YouTube */}
-      <div style={{
-        position: 'absolute',
-        top: '375px',
-        left: '40px',
-        zIndex: 10,
-        width: '320px',
-        padding: '20px',
-        borderRadius: '12px',
-        backgroundColor: 'rgba(0, 5, 0, 0.65)',
-        border: '1px solid rgba(255, 215, 0, 0.25)',
-        backdropFilter: 'blur(16px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        fontFamily: 'sans-serif',
-        userSelect: 'none'
-      }}>
+      {!isViewerMode && (
+        <div style={{
+          position: 'absolute',
+          top: '375px',
+          left: '40px',
+          zIndex: 10,
+          width: '320px',
+          padding: '20px',
+          borderRadius: '12px',
+          backgroundColor: 'rgba(0, 5, 0, 0.65)',
+          border: '1px solid rgba(255, 215, 0, 0.25)',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+          fontFamily: 'sans-serif',
+          userSelect: 'none'
+        }}>
         <h3 style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
           🎵 Nhạc Nền YouTube Ẩn
         </h3>
@@ -1411,23 +1431,25 @@ export default function GrandTreeApp() {
           </div>
         )}
       </div>
+      )}
 
       {/* UI - Giao diện Glassmorphism Bộ Chọn Giao Diện & Tùy Biến Cá Nhân Hóa (Theme & Customization Selector) */}
-      <div style={{
-        position: 'absolute',
-        top: '580px',
-        left: '40px',
-        zIndex: 10,
-        width: '320px',
-        padding: '20px',
-        borderRadius: '12px',
-        backgroundColor: 'rgba(0, 5, 0, 0.65)',
-        border: '1px solid rgba(255, 215, 0, 0.25)',
-        backdropFilter: 'blur(16px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        fontFamily: 'sans-serif',
-        userSelect: 'none'
-      }}>
+      {!isViewerMode && (
+        <div style={{
+          position: 'absolute',
+          top: '580px',
+          left: '40px',
+          zIndex: 10,
+          width: '320px',
+          padding: '20px',
+          borderRadius: '12px',
+          backgroundColor: 'rgba(0, 5, 0, 0.65)',
+          border: '1px solid rgba(255, 215, 0, 0.25)',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+          fontFamily: 'sans-serif',
+          userSelect: 'none'
+        }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
           👑 Tùy Biến Cá Nhân Hóa 3D
         </h3>
@@ -1587,6 +1609,7 @@ export default function GrandTreeApp() {
           }}
         />
       </div>
+      )}
 
       {/* UI - Stats */}
       <div style={{ position: 'absolute', bottom: '30px', left: '40px', color: '#888', zIndex: 10, fontFamily: 'sans-serif', userSelect: 'none' }}>
@@ -1802,6 +1825,103 @@ export default function GrandTreeApp() {
           🚀 {toastMessage}
         </div>
       )}
+
+      {/* Nút Viral - Tự Tạo Album 3D cho người nhận thiệp */}
+      {isViewerMode && (
+        <div style={{ position: 'absolute', top: '20px', right: '40px', zIndex: 100 }}>
+          <button
+            onClick={() => {
+              // Tải lại trang không có tham số album để chuyển sang chế độ thiết kế
+              window.location.href = window.location.origin + window.location.pathname;
+            }}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: 'rgba(0, 5, 0, 0.75)',
+              border: `2px solid ${primaryColor}`,
+              color: primaryColor,
+              fontWeight: 'bold',
+              fontSize: '11px',
+              letterSpacing: '2px',
+              borderRadius: '30px',
+              cursor: 'pointer',
+              backdropFilter: 'blur(8px)',
+              boxShadow: `0 0 15px ${primaryColor}40`,
+              transition: 'all 0.3s ease',
+              textTransform: 'uppercase',
+              fontFamily: 'sans-serif'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = `0 0 25px ${primaryColor}`;
+              e.currentTarget.style.backgroundColor = primaryColor;
+              e.currentTarget.style.color = '#000';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = `0 0 15px ${primaryColor}40`;
+              e.currentTarget.style.backgroundColor = 'rgba(0, 5, 0, 0.75)';
+              e.currentTarget.style.color = primaryColor;
+            }}
+          >
+            ✨ TỰ TẠO ALBUM 3D CỦA BẠN ✨
+          </button>
+        </div>
+      )}
+
+      {/* Premium Art Loading Screen phủ toàn màn hình */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#050a05',
+        zIndex: 99999,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        transition: 'opacity 0.8s ease, visibility 0.8s ease',
+        opacity: isPageLoading ? 1 : 0,
+        visibility: isPageLoading ? 'visible' : 'hidden',
+        pointerEvents: isPageLoading ? 'auto' : 'none',
+        fontFamily: 'sans-serif'
+      }}>
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          border: '3px solid rgba(255, 215, 0, 0.1)',
+          borderTop: `3px solid ${primaryColor}`,
+          animation: 'loadingSpin 1s infinite linear',
+          boxShadow: `0 0 15px ${primaryColor}40`,
+          marginBottom: '30px'
+        }} />
+        <style>{`
+          @keyframes loadingSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+        <div style={{
+          color: primaryColor,
+          fontSize: '13px',
+          fontWeight: 'bold',
+          letterSpacing: '3px',
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          textShadow: `0 0 10px ${primaryColor}80`,
+          padding: '0 20px',
+          lineHeight: '1.8'
+        }}>
+          {aiStatus === "INITIALIZING..." && "🎨 ĐANG DỰNG HÌNH KHÔNG GIAN 3D NGHỆ THUẬT..."}
+          {aiStatus === "DOWNLOADING AI..." && "🛰️ ĐANG TẢI HỆ THỐNG TRÍ TUỆ NHÂN TẠO AI..."}
+          {aiStatus === "REQUESTING CAMERA..." && "📷 ĐANG KẾT NỐI CAMERA WEBCAM..."}
+          {aiStatus.startsWith("ERROR") && "⚠️ HỆ THỐNG SẴN SÀNG (ĐÃ BỎ QUA CAMERA)..."}
+          {aiStatus.startsWith("AI READY") && "✨ HỆ THỐNG ĐÃ SẴN SÀNG! ĐANG KHỞI CHẠY... ✨"}
+          {!["INITIALIZING...", "DOWNLOADING AI...", "REQUESTING CAMERA..."].includes(aiStatus) && !aiStatus.startsWith("ERROR") && !aiStatus.startsWith("AI READY") && `⏳ ${aiStatus}`}
+        </div>
+      </div>
     </div>
   );
 }
