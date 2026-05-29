@@ -990,6 +990,7 @@ export default function GrandTreeApp() {
     return params.has('album'); // Tự động bật chế độ Viewer khi mở bằng link chia sẻ
   });
   const [isPageLoading, setIsPageLoading] = useState<boolean>(true); // Mặc định hiển thị màn hình Loading nghệ thuật
+  const [isSlideshowMode, setIsSlideshowMode] = useState<boolean>(false); // Trạng thái Trình chiếu tự động
 
   // Quản lý Giao diện 3D đang chọn (Lưu vào localStorage)
   const [activeTheme, setActiveTheme] = useState<'CHRISTMAS_TREE' | 'COSMIC_ORBIT' | 'VIETNAM_FLAG'>(() => {
@@ -1109,6 +1110,26 @@ export default function GrandTreeApp() {
     }
   }, [aiStatus]);
 
+  // --- Logic Trình Chiếu Tự Động (Auto-Slideshow) ---
+  useEffect(() => {
+    if (!isSlideshowMode || photoPaths.length === 0) return;
+
+    // Nếu ban đầu chưa phóng to ảnh nào, phóng to ngay ảnh hiện tại hoặc ảnh đầu tiên
+    let currentIdx = activePhotoIndex >= 0 ? activePhotoIndex : 0;
+    if (zoomedPhotoUrl === null) {
+      setActivePhotoIndex(currentIdx);
+      setZoomedPhotoUrl(photoPaths[currentIdx]);
+    }
+
+    const interval = setInterval(() => {
+      currentIdx = (currentIdx + 1) % photoPaths.length;
+      setActivePhotoIndex(currentIdx);
+      setZoomedPhotoUrl(photoPaths[currentIdx]);
+    }, 3500); // 3.5 giây đổi ảnh một lần (phù hợp khoảng 2-4 giây)
+
+    return () => clearInterval(interval);
+  }, [isSlideshowMode, photoPaths]);
+
   // --- Chống nhiễu và sườn xung kích hoạt cử chỉ ---
   const lastGestureRef = useRef<string>("");
   const lastZoomTimeRef = useRef<number>(0);
@@ -1122,6 +1143,7 @@ export default function GrandTreeApp() {
     if (name === "Open_Palm") {
       // Nếu đang phóng to ảnh -> Đóng ảnh phóng lớn, ngược lại thì rã kim thông
       setZoomedPhotoUrl(null);
+      setIsSlideshowMode(false); // Tắt slideshow khi tắt ảnh bằng cử chỉ xòe tay
       setSceneState("CHAOS");
     } else if (name === "Closed_Fist") {
       setSceneState("FORMED");
@@ -1635,6 +1657,47 @@ export default function GrandTreeApp() {
 
       {/* UI - Buttons */}
       <div style={{ position: 'absolute', bottom: '30px', right: '40px', zIndex: 10, display: 'flex', gap: '10px' }}>
+        <button
+          onClick={() => {
+            const nextState = !isSlideshowMode;
+            setIsSlideshowMode(nextState);
+            if (nextState) {
+              setSceneState("FORMED"); // Tự động tụ hội album khi trình chiếu
+            } else {
+              setZoomedPhotoUrl(null); // Đóng ảnh phóng to khi dừng trình chiếu
+            }
+          }}
+          style={{
+            padding: '12px 20px',
+            backgroundColor: isSlideshowMode ? primaryColor : 'rgba(0,0,0,0.5)',
+            border: `1px solid ${primaryColor}`,
+            color: isSlideshowMode ? '#000' : primaryColor,
+            fontFamily: 'sans-serif',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            letterSpacing: '1px',
+            cursor: 'pointer',
+            backdropFilter: 'blur(4px)',
+            boxShadow: isSlideshowMode ? `0 0 15px ${primaryColor}80` : 'none',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (!isSlideshowMode) {
+              e.currentTarget.style.backgroundColor = primaryColor;
+              e.currentTarget.style.color = '#000';
+              e.currentTarget.style.boxShadow = `0 0 15px ${primaryColor}`;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSlideshowMode) {
+              e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)';
+              e.currentTarget.style.color = primaryColor;
+              e.currentTarget.style.boxShadow = 'none';
+            }
+          }}
+        >
+          {isSlideshowMode ? '⏸️ DỪNG TRÌNH CHIẾU' : '▶️ TỰ ĐỘNG CHIẾU ẢNH'}
+        </button>
         {youtubeUrl && getYoutubeVideoId(youtubeUrl) && (
           <button
             onClick={toggleMusic}
@@ -1707,7 +1770,10 @@ export default function GrandTreeApp() {
       {/* UI - Fullscreen Lightbox Zoom (Giao diện phóng ảnh Glassmorphism) */}
       {zoomedPhotoUrl && (
         <div
-          onClick={() => setZoomedPhotoUrl(null)}
+          onClick={() => {
+            setZoomedPhotoUrl(null);
+            setIsSlideshowMode(false); // Dừng slideshow khi đóng ảnh
+          }}
           style={{
             position: 'absolute',
             top: 0,
@@ -1777,7 +1843,10 @@ export default function GrandTreeApp() {
             </div>
 
             <button
-              onClick={() => setZoomedPhotoUrl(null)}
+              onClick={() => {
+                setZoomedPhotoUrl(null);
+                setIsSlideshowMode(false); // Dừng slideshow khi đóng ảnh
+              }}
               style={{
                 position: 'absolute',
                 top: '-15px',
