@@ -10,7 +10,7 @@ Tác phẩm được phát triển và tối ưu hóa bởi nhà phát triển *
 
 ## ✨ Các Tính Năng Nổi Bật
 
-* **👑 Tác Giả & Tác Quyền**: Được thiết kế, tối ưu hóa giao diện và vận hành bởi nhà phát triển **N.T.Đ**.
+* **👑 Tác Giả & Tác Quyền**: Được sưu tầm từ cái ông gì người TQ hay Japan ý! k nhớ nữa!, tối ưu hóa giao diện và vận hành bởi nhà phát triển **N.T.Đ**.
 * **🇻🇳 Tích Hợp Lá Cờ Việt Nam 3D**: Hiệu ứng dựng hình bằng GPU tạo hình Lá cờ đỏ sao vàng uốn lượn lấp lánh cực kỳ chân thực và đầy tự hào dân tộc.
 * **🪐 Đa Dạng Giao Diện 3D**: Chuyển đổi linh hoạt giữa các chế độ nghệ thuật:
   * **Cây Kỷ Niệm 3D** (Các bức ảnh kết hợp thành một cây thông kỷ niệm lộng lẫy).
@@ -76,7 +76,7 @@ Sau đó mở trình duyệt theo đường dẫn mặc định: `http://localho
 
 ## 📄 Bản Quyền & Tác Giả
 
-Dự án được chỉnh sửa, Việt hóa 100% và tích hợp các công nghệ chia sẻ nghệ thuật bởi nhà phát triển **N.T.Đ**.
-Mã nguồn mở dựa trên giấy phép MIT License.
+Dự án được chỉnh sửa, Việt hóa 100% và tích hợp các công nghệ chia sẻ nghệ thuật bởi **N.T.Đ**.
+Mã nguồn mở dựa trên giấy phép MIT License. (Một ông nào đó mà tôi chả nhớ)
 
 *Chúc Khầy Được luôn có những trải nghiệm công nghệ tuyệt vời và đầy cảm hứng nghệ thuật! 🇻🇳✨*
