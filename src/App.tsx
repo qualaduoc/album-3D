@@ -1027,6 +1027,40 @@ export default function GrandTreeApp() {
   // Quản lý ảnh đang được chọn và phóng to
   const [activePhotoIndex, setActivePhotoIndex] = useState<number>(-1);
   const [zoomedPhotoUrl, setZoomedPhotoUrl] = useState<string | null>(null);
+  
+  // Quản lý hiển thị ảnh phóng to với hiệu ứng chuyển tiếp (Transition) nghệ thuật
+  const [displayPhotoUrl, setDisplayPhotoUrl] = useState<string | null>(null);
+  const [isPhotoTransitioning, setIsPhotoTransitioning] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (zoomedPhotoUrl === null) {
+      // Khi đóng Lightbox hoàn toàn
+      setIsPhotoTransitioning(true);
+      const timer = setTimeout(() => {
+        setDisplayPhotoUrl(null);
+      }, 250); // 250ms cho hiệu ứng thu nhỏ mờ dần của Lightbox
+      return () => clearTimeout(timer);
+    }
+
+    if (displayPhotoUrl === null) {
+      // Mở Lightbox lần đầu
+      setDisplayPhotoUrl(zoomedPhotoUrl);
+      setIsPhotoTransitioning(false);
+    } else if (displayPhotoUrl !== zoomedPhotoUrl) {
+      // Khi chuyển đổi ảnh (Slideshow tự chạy hoặc chuyển ảnh thủ công)
+      setIsPhotoTransitioning(true);
+      const timer = setTimeout(() => {
+        setDisplayPhotoUrl(zoomedPhotoUrl);
+        // Đợi ảnh mới được gán rồi bật lại hiệu ứng xuất hiện
+        const innerTimer = setTimeout(() => {
+          setIsPhotoTransitioning(false);
+        }, 50);
+        return () => clearTimeout(innerTimer);
+      }, 200); // 200ms cho hiệu ứng Fade-out ảnh cũ
+      return () => clearTimeout(timer);
+    }
+  }, [zoomedPhotoUrl, displayPhotoUrl]);
+
   // Quản lý lịch sử chỉ số ảnh đã xem để đảm bảo xoay vòng không trùng lặp
   const [viewedIndices, setViewedIndices] = useState<number[]>([]);
 
@@ -1767,8 +1801,8 @@ export default function GrandTreeApp() {
         </div>
       )}
 
-      {/* UI - Fullscreen Lightbox Zoom (Giao diện phóng ảnh Glassmorphism) */}
-      {zoomedPhotoUrl && (
+      {/* UI - Fullscreen Lightbox Zoom (Giao diện phóng ảnh Glassmorphism với hiệu ứng chuyển đổi mượt mà) */}
+      {displayPhotoUrl && (
         <div
           onClick={() => {
             setZoomedPhotoUrl(null);
@@ -1786,7 +1820,7 @@ export default function GrandTreeApp() {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            animation: 'fadeIn 0.3s ease-out',
+            animation: zoomedPhotoUrl === null ? 'fadeOut 0.25s ease-in forwards' : 'fadeIn 0.3s ease-out',
             cursor: 'zoom-out'
           }}
         >
@@ -1794,6 +1828,10 @@ export default function GrandTreeApp() {
             @keyframes fadeIn {
               from { opacity: 0; }
               to { opacity: 1; }
+            }
+            @keyframes fadeOut {
+              from { opacity: 1; }
+              to { opacity: 0; }
             }
             @keyframes popIn {
               from { transform: scale(0.85); opacity: 0; }
@@ -1808,32 +1846,39 @@ export default function GrandTreeApp() {
               padding: '20px 20px 60px 20px',
               backgroundColor: '#FFFAF0',
               borderRadius: '8px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-              border: '1px solid rgba(255,255,255,0.2)',
+              boxShadow: `0 20px 50px rgba(0,0,0,0.6), 0 0 35px ${primaryColor}20`,
+              border: `1px solid ${primaryColor}35`,
               animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               maxWidth: '90%',
-              maxHeight: '90%'
+              maxHeight: '90%',
+              transition: 'box-shadow 0.3s ease, border-color 0.3s ease'
             }}
           >
-            <img
-              src={zoomedPhotoUrl}
-              alt="Zoomed memory"
-              style={{
-                width: 'auto',
-                height: 'auto',
-                maxWidth: '450px',
-                maxHeight: '55vh',
-                objectFit: 'contain',
-                border: '1px solid rgba(0,0,0,0.1)',
-                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)'
-              }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/photos/top.jpg';
-              }}
-            />
+            <div style={{ overflow: 'hidden', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <img
+                src={displayPhotoUrl}
+                alt="Zoomed memory"
+                style={{
+                  width: 'auto',
+                  height: 'auto',
+                  maxWidth: '450px',
+                  maxHeight: '55vh',
+                  objectFit: 'contain',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)',
+                  opacity: isPhotoTransitioning ? 0 : 1,
+                  transform: isPhotoTransitioning ? 'scale(0.95) translateY(10px)' : 'scale(1) translateY(0)',
+                  filter: isPhotoTransitioning ? 'blur(5px)' : 'blur(0)',
+                  transition: 'opacity 0.22s ease-in-out, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease-in-out'
+                }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/photos/top.jpg';
+                }}
+              />
+            </div>
             <div style={{ marginTop: '25px', fontFamily: 'serif', fontSize: '18px', color: '#2d2d2d', letterSpacing: '1px', fontWeight: 'bold' }}>
               ✨ Khoảnh Khắc Kỷ Niệm Đẹp ✨
             </div>
@@ -1854,20 +1899,24 @@ export default function GrandTreeApp() {
                 width: '35px',
                 height: '35px',
                 borderRadius: '50%',
-                backgroundColor: '#FFD700',
+                backgroundColor: primaryColor,
                 border: '2px solid #fff',
-                color: '#000',
+                color: primaryColor === '#FFD700' ? '#000' : '#fff',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 fontSize: '16px',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                transition: 'transform 0.2s',
+                boxShadow: `0 4px 10px rgba(0,0,0,0.3), 0 0 10px ${primaryColor}80`,
+                transition: 'transform 0.2s, background-color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.15) rotate(90deg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+              }}
             >
               ✕
             </button>
