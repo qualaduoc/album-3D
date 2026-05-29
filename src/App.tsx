@@ -1415,11 +1415,11 @@ export default function GrandTreeApp() {
       {/* UI - Giao diện Glassmorphism Bộ Chọn Giao Diện & Tùy Biến Cá Nhân Hóa (Theme & Customization Selector) */}
       <div style={{
         position: 'absolute',
-        top: '80px',
-        left: '380px',
+        top: '580px',
+        left: '40px',
         zIndex: 10,
-        width: '290px',
-        padding: '15px 20px',
+        width: '320px',
+        padding: '20px',
         borderRadius: '12px',
         backgroundColor: 'rgba(0, 5, 0, 0.65)',
         border: '1px solid rgba(255, 215, 0, 0.25)',
