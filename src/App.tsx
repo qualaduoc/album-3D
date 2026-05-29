@@ -15,13 +15,21 @@ import { MathUtils } from 'three';
 import * as random from 'maath/random';
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 
-// --- Tự động tạo danh sách ảnh (top.jpg + 1.jpg đến 31.jpg) ---
-const TOTAL_NUMBERED_PHOTOS = 31;
-// Sửa đổi: Đưa top.jpg vào đầu mảng
+// --- Danh sách 10 ảnh kỷ niệm mặc định cao cấp của Khầy Được ---
 const bodyPhotoPaths = [
-  '/photos/top.jpg',
-  ...Array.from({ length: TOTAL_NUMBERED_PHOTOS }, (_, i) => `/photos/${i + 1}.jpg`)
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/ZRtKp3ZmkjRnsJNF3rOl4.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/xqxgfFuVhYX9RXbnl55sJ.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/slWREN-8McCrrOsdUVOXx.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/zPsldrXqEGF6eELpHXFB-.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/vnrlBcoLXvegYr3Z-NLzp.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/gzJkihkYi7V8GWY0wk-5Y.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/ybljctFYfuDs_HPHhlXxA.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/2TrzB9FtWZzzdBi7yX99e.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/hGNPouEwU67bD2-hMZ-Ws.png',
+  'https://cdn.gamma.app/2dmf89u045q2zmj/design-anything/01KST1HMWXV0XKW54BM4QJJSZH/roUZXAbtYVTJUYH_wDKEq.png'
 ];
+
+const DEFAULT_FALLBACK_PHOTO = bodyPhotoPaths[0];
 
 // --- Cấu hình trực quan ---
 const CONFIG = {
@@ -276,7 +284,7 @@ const PhotoOrnaments = ({ state, photoPaths, onActiveIndexChange, theme }: Photo
             undefined,
             () => {
               // Gặp lỗi tải ảnh -> Dùng ảnh mặc định của cây thông làm dự phòng
-              loader.load('/photos/top.jpg', (fallbackTex) => {
+              loader.load(DEFAULT_FALLBACK_PHOTO, (fallbackTex) => {
                 resolve(fallbackTex);
               }, undefined, () => {
                 // Phương án cuối cùng: Tạo Texture màu xanh emerald từ Canvas
@@ -1875,7 +1883,7 @@ export default function GrandTreeApp() {
                   transition: 'opacity 0.22s ease-in-out, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease-in-out'
                 }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/photos/top.jpg';
+                  (e.target as HTMLImageElement).src = DEFAULT_FALLBACK_PHOTO;
                 }}
               />
             </div>
