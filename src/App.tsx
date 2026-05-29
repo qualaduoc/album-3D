@@ -145,7 +145,7 @@ const getCosmicPosition = () => {
 };
 
 // --- Component: Foliage ---
-const Foliage = ({ state, theme }: { state: 'CHAOS' | 'FORMED'; theme: 'CHRISTMAS_TREE' | 'COSMIC_ORBIT' | 'VIETNAM_FLAG' }) => {
+const Foliage = ({ state, theme, primaryColor, particleType }: { state: 'CHAOS' | 'FORMED'; theme: 'CHRISTMAS_TREE' | 'COSMIC_ORBIT' | 'VIETNAM_FLAG'; primaryColor: string; particleType: string }) => {
   const materialRef = useRef<any>(null);
   
   const { positions, targetPositionsTree, targetPositionsTheme, randoms, colorsTree, colorsTheme } = useMemo(() => {
@@ -159,14 +159,24 @@ const Foliage = ({ state, theme }: { state: 'CHAOS' | 'FORMED'; theme: 'CHRISTMA
     const colorsTheme = new Float32Array(count * 3);
     
     const spherePoints = random.inSphere(new Float32Array(count * 3), { radius: 25 }) as Float32Array;
-    const emeraldColor = new THREE.Color(CONFIG.colors.emerald);
+    
+    // Quyết định màu sắc hạt dựa trên loại hạt người dùng chọn
+    const getParticleColor = (type: string) => {
+      if (type === 'PEACH') return new THREE.Color('#FF6B8B'); // Hồng đào tết
+      if (type === 'MAI') return new THREE.Color('#FFD700');   // Vàng mai phú quý
+      if (type === 'HEART') return new THREE.Color('#FF3366'); // Đỏ hồng tình yêu
+      if (type === 'BUBBLE') return new THREE.Color('#00E5FF'); // Xanh cyan bong bóng
+      return new THREE.Color(primaryColor); // Mặc định là màu chủ đạo
+    };
+
+    const treeColor = getParticleColor(particleType);
     
     for (let i = 0; i < count; i++) {
       positions[i*3] = spherePoints[i*3]; positions[i*3+1] = spherePoints[i*3+1]; positions[i*3+2] = spherePoints[i*3+2];
       
       const [tx, ty, tz] = getTreePosition();
       targetPositionsTree[i*3] = tx; targetPositionsTree[i*3+1] = ty; targetPositionsTree[i*3+2] = tz;
-      colorsTree[i*3] = emeraldColor.r; colorsTree[i*3+1] = emeraldColor.g; colorsTree[i*3+2] = emeraldColor.b;
+      colorsTree[i*3] = treeColor.r; colorsTree[i*3+1] = treeColor.g; colorsTree[i*3+2] = treeColor.b;
       
       let pos = [0, 0, 0];
       let color = new THREE.Color('#000000');
@@ -175,7 +185,7 @@ const Foliage = ({ state, theme }: { state: 'CHAOS' | 'FORMED'; theme: 'CHRISTMA
         pos = getCosmicPosition();
         const rand = Math.random();
         if (rand < 0.4) color = new THREE.Color('#0b2027');
-        else if (rand < 0.8) color = new THREE.Color('#00e5ff');
+        else if (rand < 0.8) color = new THREE.Color(primaryColor); // Đồng bộ màu chủ đạo vào vũ trụ!
         else color = new THREE.Color('#eceff1');
       } else if (theme === 'VIETNAM_FLAG') {
         const result = getVietnamFlagPositionAndColor();
@@ -183,7 +193,7 @@ const Foliage = ({ state, theme }: { state: 'CHAOS' | 'FORMED'; theme: 'CHRISTMA
         color = result.color;
       } else {
         pos = [tx, ty, tz];
-        color = emeraldColor;
+        color = treeColor;
       }
       
       targetPositionsTheme[i*3] = pos[0]; targetPositionsTheme[i*3+1] = pos[1]; targetPositionsTheme[i*3+2] = pos[2];
@@ -192,7 +202,7 @@ const Foliage = ({ state, theme }: { state: 'CHAOS' | 'FORMED'; theme: 'CHRISTMA
       randoms[i] = Math.random();
     }
     return { positions, targetPositionsTree, targetPositionsTheme, randoms, colorsTree, colorsTheme };
-  }, [theme]);
+  }, [theme, primaryColor, particleType]);
 
   // Hiệu ứng bay lượn trung gian: Khi đổi theme, ta reset uThemeProgress về 0 trước
   useEffect(() => {
@@ -735,13 +745,19 @@ const Experience = ({
   rotationSpeed,
   photoPaths,
   onActiveIndexChange,
-  theme
+  theme,
+  primaryColor,
+  particleType,
+  autoRotateSpeed
 }: {
   sceneState: 'CHAOS' | 'FORMED';
   rotationSpeed: number;
   photoPaths: string[];
   onActiveIndexChange?: (index: number) => void;
   theme: 'CHRISTMAS_TREE' | 'COSMIC_ORBIT' | 'VIETNAM_FLAG';
+  primaryColor: string;
+  particleType: string;
+  autoRotateSpeed: number;
 }) => {
   const controlsRef = useRef<any>(null);
   useFrame(() => {
@@ -754,26 +770,26 @@ const Experience = ({
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 8, 60]} fov={45} />
-      <OrbitControls ref={controlsRef} enablePan={false} enableZoom={true} minDistance={30} maxDistance={120} autoRotate={rotationSpeed === 0 && sceneState === 'FORMED'} autoRotateSpeed={0.3} maxPolarAngle={Math.PI / 1.7} />
+      <OrbitControls ref={controlsRef} enablePan={false} enableZoom={true} minDistance={30} maxDistance={120} autoRotate={rotationSpeed === 0 && sceneState === 'FORMED' && autoRotateSpeed > 0} autoRotateSpeed={autoRotateSpeed} maxPolarAngle={Math.PI / 1.7} />
 
       <color attach="background" args={['#000300']} />
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
       <Environment preset="night" background={false} />
 
       <ambientLight intensity={0.4} color="#003311" />
-      <pointLight position={[30, 30, 30]} intensity={100} color={CONFIG.colors.warmLight} />
+      <pointLight position={[30, 30, 30]} intensity={100} color={primaryColor} />
       <pointLight position={[-30, 10, -30]} intensity={50} color={CONFIG.colors.gold} />
       <pointLight position={[0, -20, 10]} intensity={30} color="#ffffff" />
 
       <group position={[0, -6, 0]}>
-        <Foliage state={sceneState} theme={theme} />
+        <Foliage state={sceneState} theme={theme} primaryColor={primaryColor} particleType={particleType} />
         <Suspense fallback={null}>
            <PhotoOrnaments state={sceneState} photoPaths={photoPaths} onActiveIndexChange={onActiveIndexChange} theme={theme} />
            <ChristmasElements state={sceneState} theme={theme} />
            <FairyLights state={sceneState} theme={theme} />
            <TopStar state={sceneState} theme={theme} />
         </Suspense>
-        <Sparkles count={600} scale={50} size={8} speed={0.4} opacity={0.4} color={CONFIG.colors.silver} />
+        <Sparkles count={600} scale={50} size={8} speed={0.4} opacity={0.4} color={primaryColor} />
       </group>
 
       <EffectComposer>
@@ -953,6 +969,21 @@ export default function GrandTreeApp() {
   const [aiStatus, setAiStatus] = useState("INITIALIZING...");
   const [debugMode, setDebugMode] = useState(false);
 
+  // --- Quản lý các tùy chỉnh cá nhân hóa của Khầy ---
+  const [greetingText, setGreetingText] = useState<string>(() => {
+    return localStorage.getItem('album_3d_greeting_text') || 'Chào Mừng Đến Với Album Kỷ Niệm 3D';
+  });
+  const [primaryColor, setPrimaryColor] = useState<string>(() => {
+    return localStorage.getItem('album_3d_primary_color') || '#FFD700'; // Mặc định vàng hoàng kim cực sang
+  });
+  const [particleType, setParticleType] = useState<string>(() => {
+    return localStorage.getItem('album_3d_particle_type') || 'EMERALD'; // Mặc định là hạt xanh ngọc
+  });
+  const [autoRotateSpeed, setAutoRotateSpeed] = useState<number>(() => {
+    const saved = localStorage.getItem('album_3d_auto_rotate_speed');
+    return saved ? parseFloat(saved) : 0.5; // Tốc độ xoay mặc định là 0.5
+  });
+
   // Quản lý Giao diện 3D đang chọn (Lưu vào localStorage)
   const [activeTheme, setActiveTheme] = useState<'CHRISTMAS_TREE' | 'COSMIC_ORBIT' | 'VIETNAM_FLAG'>(() => {
     const saved = localStorage.getItem('christmas_tree_active_theme');
@@ -1015,6 +1046,24 @@ export default function GrandTreeApp() {
             setActiveTheme(parsed.theme);
             localStorage.setItem('christmas_tree_active_theme', parsed.theme);
           }
+          // GIẢI MÃ CÁC THAM SỐ CÁ NHÂN HÓA MỚI
+          if (parsed.greet !== undefined) {
+            setGreetingText(parsed.greet);
+            localStorage.setItem('album_3d_greeting_text', parsed.greet);
+          }
+          if (parsed.color) {
+            setPrimaryColor(parsed.color);
+            localStorage.setItem('album_3d_primary_color', parsed.color);
+          }
+          if (parsed.part) {
+            setParticleType(parsed.part);
+            localStorage.setItem('album_3d_particle_type', parsed.part);
+          }
+          if (parsed.speed !== undefined) {
+            setAutoRotateSpeed(parsed.speed);
+            localStorage.setItem('album_3d_auto_rotate_speed', String(parsed.speed));
+          }
+
           setAiStatus("ĐÃ TẢI ALBUM CHIA SẺ!");
           setSceneState("FORMED");
           setIsPlaying(true); // Tự động phát khi người dùng mở thiệp chia sẻ
@@ -1023,12 +1072,23 @@ export default function GrandTreeApp() {
         }
       }
     } else {
-      // Nếu không có link chia sẻ -> Đọc youtubeUrl từ localStorage nếu có
+      // Nếu không có link chia sẻ -> Đọc youtubeUrl và cấu hình cũ từ localStorage nếu có
       const savedMusic = localStorage.getItem('album_3d_youtube_url');
       if (savedMusic) {
         setYoutubeUrl(savedMusic);
         setYoutubeUrlInput(savedMusic);
       }
+      const savedGreet = localStorage.getItem('album_3d_greeting_text');
+      if (savedGreet !== null) setGreetingText(savedGreet);
+
+      const savedColor = localStorage.getItem('album_3d_primary_color');
+      if (savedColor) setPrimaryColor(savedColor);
+
+      const savedPart = localStorage.getItem('album_3d_particle_type');
+      if (savedPart) setParticleType(savedPart);
+
+      const savedSpeed = localStorage.getItem('album_3d_auto_rotate_speed');
+      if (savedSpeed) setAutoRotateSpeed(parseFloat(savedSpeed));
     }
   }, []);
 
@@ -1150,14 +1210,18 @@ export default function GrandTreeApp() {
     const albumObj = {
       photos: photoPaths,
       music: youtubeUrl,
-      theme: activeTheme
+      theme: activeTheme,
+      greet: greetingText,
+      color: primaryColor,
+      part: particleType,
+      speed: autoRotateSpeed
     };
     const jsonStr = JSON.stringify(albumObj);
     const base64Str = encodeBase64(jsonStr);
     const shareUrl = `${window.location.origin}${window.location.pathname}?album=${base64Str}`;
     
     navigator.clipboard.writeText(shareUrl).then(() => {
-      setToastMessage("Đã copy liên kết chia sẻ Album & Nhạc vào bộ nhớ tạm! 🚀");
+      setToastMessage("Đã copy liên kết chia sẻ Album & Nhạc cá nhân hóa thành công! Gửi ngay cho người thân thôi Khầy ơi! 🚀");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
     }).catch((err) => {
@@ -1176,6 +1240,9 @@ export default function GrandTreeApp() {
               photoPaths={photoPaths}
               onActiveIndexChange={setActivePhotoIndex}
               theme={activeTheme}
+              primaryColor={primaryColor}
+              particleType={particleType}
+              autoRotateSpeed={autoRotateSpeed}
             />
         </Canvas>
       </div>
@@ -1345,13 +1412,13 @@ export default function GrandTreeApp() {
         )}
       </div>
 
-      {/* UI - Giao diện Glassmorphism Bộ Chọn Giao Diện (ThemeSelector) */}
+      {/* UI - Giao diện Glassmorphism Bộ Chọn Giao Diện & Tùy Biến Cá Nhân Hóa (Theme & Customization Selector) */}
       <div style={{
         position: 'absolute',
         top: '80px',
         left: '380px',
         zIndex: 10,
-        width: '260px',
+        width: '290px',
         padding: '15px 20px',
         borderRadius: '12px',
         backgroundColor: 'rgba(0, 5, 0, 0.65)',
@@ -1362,11 +1429,16 @@ export default function GrandTreeApp() {
         userSelect: 'none'
       }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          🎭 Chọn Giao Diện 3D
+          👑 Tùy Biến Cá Nhân Hóa 3D
         </h3>
         <p style={{ margin: '0 0 10px 0', fontSize: '10px', color: '#aaa', lineHeight: '1.4' }}>
-          Chuyển đổi tức thời mô hình cây kỷ niệm thành hệ quỹ đạo vũ trụ cực kỳ sinh động!
+          Tự tay thiết kế không gian kỷ niệm 3D nghệ thuật theo phong cách của riêng Khầy!
         </p>
+
+        {/* Lựa chọn theme chính */}
+        <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          🎭 Chọn Giao Diện 3D
+        </h4>
         <select
           value={activeTheme}
           onChange={(e) => {
@@ -1386,6 +1458,7 @@ export default function GrandTreeApp() {
             fontWeight: 'bold',
             outline: 'none',
             cursor: 'pointer',
+            marginBottom: '12px',
             fontFamily: 'sans-serif'
           }}
         >
@@ -1393,6 +1466,126 @@ export default function GrandTreeApp() {
           <option value="COSMIC_ORBIT" style={{ backgroundColor: '#000', color: '#FFD700' }}>🪐 Vũ Trụ & Quỹ Đạo Ảnh</option>
           <option value="VIETNAM_FLAG" style={{ backgroundColor: '#000', color: '#FF3333' }}>🇻🇳 Lá Cờ Việt Nam 3D</option>
         </select>
+
+        <hr style={{ border: 'none', borderTop: '1px solid rgba(255, 215, 0, 0.15)', margin: '12px 0' }} />
+
+        {/* Nhập lời chúc cá nhân */}
+        <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          ✍️ Lời Chúc Kỷ Niệm
+        </h4>
+        <input
+          type="text"
+          value={greetingText}
+          onChange={(e) => {
+            setGreetingText(e.target.value);
+            localStorage.setItem('album_3d_greeting_text', e.target.value);
+          }}
+          placeholder="Ví dụ: Kỷ Niệm Đẹp Mãi Trong Tim..."
+          maxLength={80}
+          style={{
+            width: '100%',
+            padding: '8px',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            border: '1px solid rgba(255, 215, 0, 0.3)',
+            borderRadius: '6px',
+            color: '#fff',
+            fontSize: '11px',
+            outline: 'none',
+            boxSizing: 'border-box',
+            marginBottom: '12px',
+            fontFamily: 'sans-serif'
+          }}
+        />
+
+        {/* Chọn màu sắc chủ đạo */}
+        <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          🎨 Chọn Màu Ánh Sáng
+        </h4>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          {[
+            { name: 'Ngọc Lục Bảo', hex: '#004225', color: '#00FF66' },
+            { name: 'Vàng Hoàng Kim', hex: '#FFD700', color: '#FFD700' },
+            { name: 'Đỏ Hồng Ruby', hex: '#FF3366', color: '#FF3366' },
+            { name: 'Xanh Sapphire', hex: '#1976D2', color: '#3399FF' },
+            { name: 'Tím Thạch Anh', hex: '#8E24AA', color: '#E066FF' }
+          ].map((item) => (
+            <button
+              key={item.hex}
+              onClick={() => {
+                setPrimaryColor(item.hex);
+                localStorage.setItem('album_3d_primary_color', item.hex);
+              }}
+              title={item.name}
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: item.hex,
+                border: primaryColor === item.hex ? '2px solid #FFF' : '1px solid rgba(255,255,255,0.3)',
+                boxShadow: primaryColor === item.hex ? `0 0 8px ${item.color}` : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                padding: 0
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Chọn hiệu ứng hạt bay */}
+        <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          🌸 Chọn Hiệu Ứng Hạt
+        </h4>
+        <select
+          value={particleType}
+          onChange={(e) => {
+            setParticleType(e.target.value);
+            localStorage.setItem('album_3d_particle_type', e.target.value);
+          }}
+          style={{
+            width: '100%',
+            padding: '8px',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            border: '1px solid rgba(255, 215, 0, 0.3)',
+            borderRadius: '6px',
+            color: '#FFD700',
+            fontSize: '11px',
+            outline: 'none',
+            cursor: 'pointer',
+            marginBottom: '12px',
+            fontFamily: 'sans-serif'
+          }}
+        >
+          <option value="EMERALD" style={{ backgroundColor: '#000', color: '#fff' }}>🍃 Lá Kim Ngọc Lục Bảo</option>
+          <option value="PEACH" style={{ backgroundColor: '#000', color: '#FF6B8B' }}>🌸 Hoa Đào Ngày Tết</option>
+          <option value="MAI" style={{ backgroundColor: '#000', color: '#FFD700' }}>🌼 Hoa Mai Phú Quý</option>
+          <option value="HEART" style={{ backgroundColor: '#000', color: '#FF3366' }}>💖 Trái Tim Tình Yêu</option>
+          <option value="BUBBLE" style={{ backgroundColor: '#000', color: '#00E5FF' }}>🫧 Bong Bóng Đại Dương</option>
+        </select>
+
+        {/* Điều chỉnh tốc độ xoay */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
+          <h4 style={{ margin: 0, fontSize: '11px', color: '#FFD700', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            🔄 Tốc Độ Tự Động Xoay
+          </h4>
+          <span style={{ fontSize: '11px', color: '#fff', fontWeight: 'bold' }}>{autoRotateSpeed.toFixed(1)}x</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="3"
+          step="0.1"
+          value={autoRotateSpeed}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value);
+            setAutoRotateSpeed(val);
+            localStorage.setItem('album_3d_auto_rotate_speed', String(val));
+          }}
+          style={{
+            width: '100%',
+            accentColor: '#FFD700',
+            cursor: 'pointer'
+          }}
+        />
       </div>
 
       {/* UI - Stats */}
@@ -1431,6 +1624,42 @@ export default function GrandTreeApp() {
       <div style={{ position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', color: aiStatus.includes('ERROR') ? '#FF0000' : 'rgba(255, 215, 0, 0.4)', fontSize: '10px', letterSpacing: '2px', zIndex: 10, background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: '4px' }}>
         {aiStatus}
       </div>
+
+      {/* Lời chúc cá nhân hóa Glassmorphism tỏa sáng gợn sóng */}
+      {greetingText && (
+        <div style={{
+          position: 'absolute',
+          top: '55px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          padding: '8px 25px',
+          borderRadius: '25px',
+          backgroundColor: 'rgba(0, 5, 0, 0.4)',
+          border: `1px solid ${primaryColor}40`,
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+          color: primaryColor,
+          fontFamily: 'serif',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          letterSpacing: '2px',
+          textAlign: 'center',
+          textShadow: `0 0 8px ${primaryColor}80`,
+          animation: 'pulseGlow 3s infinite ease-in-out',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          maxWidth: '85%'
+        }}>
+          <style>{`
+            @keyframes pulseGlow {
+              0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
+              50% { transform: translateX(-50%) scale(1.02); opacity: 1; text-shadow: 0 0 15px ${primaryColor}; }
+            }
+          `}</style>
+          ✨ {greetingText} ✨
+        </div>
+      )}
 
       {/* UI - Fullscreen Lightbox Zoom (Giao diện phóng ảnh Glassmorphism) */}
       {zoomedPhotoUrl && (
